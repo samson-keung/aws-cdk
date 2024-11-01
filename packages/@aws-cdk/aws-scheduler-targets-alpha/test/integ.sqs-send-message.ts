@@ -1,5 +1,5 @@
 import * as scheduler from '@aws-cdk/aws-scheduler-alpha';
-import { ExpectedResult, IntegTest } from '@aws-cdk/integ-tests-alpha';
+import {ExpectedResult, IntegTest, Match} from '@aws-cdk/integ-tests-alpha';
 import * as cdk from 'aws-cdk-lib';
 import { Queue } from 'aws-cdk-lib/aws-sqs';
 import { SqsSendMessage } from '../lib';
@@ -36,10 +36,11 @@ const message = integ.assertions.awsApiCall('SQS', 'receiveMessage', {
 });
 
 // Verifies that expected message is received from the queue
-message.assertAtPath(
-  'Messages.0.Body',
-  ExpectedResult.exact(payload),
-).waitForAssertions({
+message.expect(ExpectedResult.objectLike({
+  Messages: Match.arrayWith([
+    Match.objectLike({ Body: payload }),
+  ]),
+})).waitForAssertions({
   totalTimeout: cdk.Duration.minutes(3),
   interval: cdk.Duration.seconds(10),
 });
